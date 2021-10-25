@@ -29,6 +29,7 @@ suppressMessages(library(PCAtools))
 
 ```
 
+
 ```{r}
 
 # Upload the data from a total data file:
@@ -43,42 +44,52 @@ UpperMixed_data <- total_ML_split$Y
 
 ```
 
+
 ```{r}
 
 # CREATE THE MULTIPLE PREDICTIVE MODELS: BOTH LINEAR AND GENERAL LINEAR MODELS
 
 # Linear models:
 model1 <- lm(TEP ~ Log_Chl + Nitrate, data = UpperMixed_data)
-model2 <- lm(TEP ~ Log_Chl + factor(Season), data = UpperMixed_data)
+model2 <- lm(TEP ~ Log_Chl + factor(Season) + Temperature, data = UpperMixed_data)  # Potential satellite model (DO instead of Temperature works very well!)
 model3 <- lm(TEP ~ Log_Chl + Nitrate + factor(Season), data = UpperMixed_data)
 model4 <- lm(TEP ~ Log_Chl + factor(Season) + DO + Nitrate, data = UpperMixed_data)
+model5 <- lm(TEP ~ Log_Chl + factor(Season) + DO + Nitrate + MLD, data = UpperMixed_data)
+model6 <- lm(TEP ~ Log_Chl + DO + MLD + Nitrate, data = UpperMixed_data)
 
 # General linear models:
 glmmodel1 <- glm(TEP ~ Log_Chl + Nitrate, family = Gamma(link = "log"), data = UpperMixed_data)
-glmmodel2 <- glm(TEP ~ Log_Chl + factor(Season), family = Gamma(link = "log"), data = UpperMixed_data)
+glmmodel2 <- glm(TEP ~ Log_Chl + factor(Season) + Temperature, family = Gamma(link = "log"), data = UpperMixed_data)  # Potential satellite model
 glmmodel3 <- glm(TEP ~ Log_Chl + Nitrate + factor(Season), family = Gamma(link = "log"), data = UpperMixed_data)
 glmmodel4 <- glm(TEP ~ Log_Chl + factor(Season) + DO + Nitrate, family = Gamma(link = "log"), data = UpperMixed_data)
+glmmodel5 <- glm(TEP ~ Log_Chl + factor(Season) + DO + Nitrate + MLD, family = Gamma(link = "log"), data = UpperMixed_data)
+glmmodel6 <- glm(TEP ~ Log_Chl + factor(Season) + DO + MLD, family = Gamma(link = "log"), data = UpperMixed_data)
 
 ```
+
 
 ```{r}
 
 # Visualize the strengths of each predictor in different linear models:
-plot_summs(model1, model2, model3, model4, scale = TRUE, plot.distributions = FALSE)
+plot_summs(model1, model2, model3, model4, 
+           model5, model6, scale = TRUE, plot.distributions = FALSE)
 
 # Visualize the strengths of each predictor in different general linear models:
-plot_summs(glmmodel1, glmmodel2, glmmodel3, glmmodel4, scale = TRUE, plot.distributions = FALSE)
+plot_summs(glmmodel1, glmmodel2, glmmodel3, glmmodel4, 
+           glmmodel5, glmmodel6, scale = TRUE, plot.distributions = FALSE)
 
 # Now we have a better idea of how the uncertainty and magnitude of effect differs for these variables.
 
 # Create a table of CIs for linear models:
-export_summs(model1, model2, model3, model4, scale = TRUE, error_format = "(p = {p.value})")
+export_summs(model1, model2, model3, model4, model5, model6, 
+             scale = TRUE, error_format = "(p = {p.value})")
 
 # Create a table of CIs for general linear models:
-export_summs(glmmodel1, glmmodel2, glmmodel3, glmmodel4, scale = TRUE, error_format = "(p = {p.value})")
+export_summs(glmmodel1, glmmodel2, glmmodel3, glmmodel4, glmmodel5, glmmodel6, 
+             scale = TRUE, error_format = "(p = {p.value})")
 
 # Another summ table: Can check VIF for any model I want to input below:
-summ(glmmodel4, vifs = TRUE)
+summ(model5, vifs = TRUE)
 ```
 
 
@@ -88,12 +99,13 @@ summ(glmmodel4, vifs = TRUE)
 # The best-fit model according to AIC is the one that explains the greatest amount of variation using the fewest possible independent variables.
 
 # Linear mdoels:
-AIC(model1, model2, model3, model4)
+AIC(model1, model2, model3, model4, model5, model6)
 
 # General linear mdoels:
-AIC(glmmodel1, glmmodel2, glmmodel3, glmmodel4)
+AIC(glmmodel1, glmmodel2, glmmodel3, glmmodel4, glmmodel5, glmmodel6)
 
 ```
+
 
 ```{r}
 # COMPARING MODEL ASSUMPTIONS: DISTRIBUTION OF RESIDUALS:
@@ -104,12 +116,16 @@ UpperMixed_data$resid1 <- resid(model1)
 UpperMixed_data$resid2 <- resid(model2)  
 UpperMixed_data$resid3 <- resid(model3)  
 UpperMixed_data$resid4 <- resid(model4)  
+UpperMixed_data$resid5 <- resid(model5)  
+UpperMixed_data$resid6 <- resid(model6) 
 
 # Get the general linear model residuals:
 UpperMixed_data$glmresid1 <- resid(glmmodel1)  
 UpperMixed_data$glmresid2 <- resid(glmmodel2)  
 UpperMixed_data$glmresid3 <- resid(glmmodel3)  
-UpperMixed_data$glmresid4 <- resid(glmmodel4)  
+UpperMixed_data$glmresid4 <- resid(glmmodel4) 
+UpperMixed_data$glmresid5 <- resid(glmmodel5)  
+UpperMixed_data$glmresid6 <- resid(glmmodel6)
 
 # Plot the distribution of the linear model residuals:
 H_model1 <- ggplot(data = UpperMixed_data, aes(resid1)) + 
@@ -120,9 +136,14 @@ H_model3 <- ggplot(data = UpperMixed_data, aes(resid3)) +
   geom_histogram(binwidth = 5, colour = "white", fill = "dodgerblue") 
 H_model4 <- ggplot(data = UpperMixed_data, aes(resid4)) + 
   geom_histogram(binwidth = 5, colour = "white", fill = "dodgerblue") 
+H_model5 <- ggplot(data = UpperMixed_data, aes(resid5)) + 
+  geom_histogram(binwidth = 5, colour = "white", fill = "dodgerblue") 
+H_model6 <- ggplot(data = UpperMixed_data, aes(resid6)) + 
+  geom_histogram(binwidth = 5, colour = "white", fill = "dodgerblue") 
 
 # Combine all the plots:
-linear_histograms <- ggarrange(H_model1, H_model2, H_model3, H_model4)
+linear_histograms <- ggarrange(H_model1, H_model2, H_model3, H_model4,
+                               H_model5, H_model6)
 linear_histograms <- annotate_figure(linear_histograms, top = text_grob
                     ("Linear models: Residual distributions", color = "black", size = 12))
 linear_histograms
@@ -136,26 +157,44 @@ H_glmmodel3 <- ggplot(data = UpperMixed_data, aes(glmresid3)) +
   geom_histogram(binwidth = 0.1, colour = "white", fill = "dodgerblue") 
 H_glmmodel4 <- ggplot(data = UpperMixed_data, aes(glmresid4)) + 
   geom_histogram(binwidth = 0.1, colour = "white", fill = "dodgerblue") 
+H_glmmodel5 <- ggplot(data = UpperMixed_data, aes(glmresid5)) + 
+  geom_histogram(binwidth = 0.1, colour = "white", fill = "dodgerblue") 
+H_glmmodel6 <- ggplot(data = UpperMixed_data, aes(glmresid6)) + 
+  geom_histogram(binwidth = 0.1, colour = "white", fill = "dodgerblue") 
 
 # Combine all the plots:
-glm_histograms <- ggarrange(H_glmmodel1, H_glmmodel2, H_glmmodel3, H_glmmodel4)
+glm_histograms <- ggarrange(H_glmmodel1, H_glmmodel2, H_glmmodel3, H_glmmodel4,
+                            H_glmmodel5, H_glmmodel6)
 glm_histograms <- annotate_figure(glm_histograms, top = text_grob
                     ("General linear models: Residual distributions", color = "black", size = 12))
 glm_histograms
 
-# Use the Shapiro-Wilks test to test for normaility distributions in the lm residuals:
+# Use the Shapiro-Wilks test to test for normality distributions in the lm residuals:
 shapiro.test(UpperMixed_data$resid1) 
 shapiro.test(UpperMixed_data$resid2) 
 shapiro.test(UpperMixed_data$resid3) 
 shapiro.test(UpperMixed_data$resid4)
+shapiro.test(UpperMixed_data$resid5) 
+shapiro.test(UpperMixed_data$resid6)
 
-# Use the Shapiro-Wilks test to test for normaility distributions in the glm residuals:
+# Use the Shapiro-Wilks test to test for normality distributions in the glm residuals:
 shapiro.test(UpperMixed_data$glmresid1) 
 shapiro.test(UpperMixed_data$glmresid2) 
 shapiro.test(UpperMixed_data$glmresid3) 
 shapiro.test(UpperMixed_data$glmresid4)
+shapiro.test(UpperMixed_data$glmresid5) 
+shapiro.test(UpperMixed_data$glmresid6)
+
+# Check the variance inflation factor for auto-correlation between predictor variables in the lm:
+vif(model1)
+vif(model2)
+vif(model3)
+vif(model4)
+vif(model5)
+vif(model6)
 
 ```
+
 
 ```{r}
 # COMPARING MODEL ASSUMPTIONS: RESIDUALS VS FITTED VALUES:
@@ -166,12 +205,16 @@ UpperMixed_data$predict1 <- predict(model1, type = "response")
 UpperMixed_data$predict2 <- predict(model2, type = "response")  
 UpperMixed_data$predict3 <- predict(model3, type = "response")  
 UpperMixed_data$predict4 <- predict(model4, type = "response")  
+UpperMixed_data$predict5 <- predict(model5, type = "response")  
+UpperMixed_data$predict6 <- predict(model6, type = "response") 
 
 # Get the general linear model predictions:
 UpperMixed_data$glmpredict1 <- predict(glmmodel1, type = "response")  
 UpperMixed_data$glmpredict2 <- predict(glmmodel2, type = "response")  
 UpperMixed_data$glmpredict3 <- predict(glmmodel3, type = "response")  
 UpperMixed_data$glmpredict4 <- predict(glmmodel4, type = "response")  
+UpperMixed_data$glmpredict5 <- predict(glmmodel5, type = "response")  
+UpperMixed_data$glmpredict6 <- predict(glmmodel6, type = "response") 
 
 # Plot the residuals vs fitted for the linear models:
 Res_model1 <- ggplot(data = UpperMixed_data, aes(predict1, resid1)) +
@@ -182,9 +225,14 @@ Res_model3 <- ggplot(data = UpperMixed_data, aes(predict3, resid3)) +
   geom_point(pch = 10) 
 Res_model4 <- ggplot(data = UpperMixed_data, aes(predict4, resid4)) +
   geom_point(pch = 10) 
+Res_model5 <- ggplot(data = UpperMixed_data, aes(predict5, resid5)) +
+  geom_point(pch = 10) 
+Res_model6 <- ggplot(data = UpperMixed_data, aes(predict6, resid6)) +
+  geom_point(pch = 10) 
 
 # Combine all the plots:
-linear_resids <- ggarrange(Res_model1, Res_model2, Res_model3, Res_model4, common.legend = TRUE)
+linear_resids <- ggarrange(Res_model1, Res_model2, Res_model3, Res_model4, 
+                           Res_model5, Res_model6, common.legend = TRUE)
 linear_resids <- annotate_figure(linear_resids, top = text_grob
                     ("Linear models: Fitted vs Residuals", color = "black", size = 12))
 linear_resids
@@ -198,9 +246,14 @@ Res_glmmodel3 <- ggplot(data = UpperMixed_data, aes(glmpredict3, glmresid3)) +
   geom_point(pch = 10) 
 Res_glmmodel4 <- ggplot(data = UpperMixed_data, aes(glmpredict4, glmresid4)) +
   geom_point(pch = 10) 
+Res_glmmodel5 <- ggplot(data = UpperMixed_data, aes(glmpredict5, glmresid5)) +
+  geom_point(pch = 10) 
+Res_glmmodel6 <- ggplot(data = UpperMixed_data, aes(glmpredict6, glmresid6)) +
+  geom_point(pch = 10) 
 
 # Combine all the plots:
-glm_resids <- ggarrange(Res_glmmodel1, Res_glmmodel2, Res_glmmodel3, Res_glmmodel4, common.legend = TRUE)
+glm_resids <- ggarrange(Res_glmmodel1, Res_glmmodel2, Res_glmmodel3, Res_glmmodel4, 
+                        Res_glmmodel5, Res_glmmodel6, common.legend = TRUE)
 glm_resids <- annotate_figure(glm_resids, top = text_grob
                     ("General linear models: Fitted vs Residuals", color = "black", size = 12))
 glm_resids
@@ -209,31 +262,39 @@ glm_resids
 
 
 ```{r}
-# CROSS VALIDATION AND MODEL COMPARISON
+# TRAINING AND TESTING SETS - SPLITTING THE DATA
 
 # Perform cross validations to test the models. Split the data set into a training set (70%) and a testing set (30%):
 
 # Set seed to replicate the same data partitions each time the code chunk is run:
-set.seed(40)  # 11, 13, 32, 36, 40
+set.seed(333)  # 11, 13, 32, 36, 40
 
 # Create the data split 70:30 training:testing:
 training.samples <- createDataPartition(UpperMixed_data$TEP, p = 0.7, list = FALSE)
 train.data1  <- UpperMixed_data[training.samples, ]  # Training set
 test.data1 <- UpperMixed_data[-training.samples, ]  # Testing set
 
-# Need to recreate each model, but using the traing set specified above. Using the same seed for all these models will ensure equality in the data they recieve. 
+# Need to recreate each model, but using the training set specified above. Using the same seed for all these models will ensure equality in the data they receive. 
+
+```
+
+
+```{r}
+# CROSS VALIDATION AND MODEL COMPARISON: linear models
 
 # Linear validation models:
-val_model1 <- lm(TEP ~ Log_Chl + Nitrate, data = train.data1)
-val_model2 <- lm(TEP ~ Log_Chl + factor(Season), data = train.data1)
-val_model3 <- lm(TEP ~ Log_Chl + Nitrate + factor(Season), data = train.data1)
-val_model4 <- lm(TEP ~ Log_Chl + factor(Season) + DO, data = train.data1)
-
-# General linear validation mdoels:
-val_glmmodel1 <- glm(TEP ~ Log_Chl + Nitrate, family = Gamma(link = "log"), data = train.data1)
-val_glmmodel2 <- glm(TEP ~ Log_Chl + factor(Season), family = Gamma(link = "log"), data = train.data1)
-val_glmmodel3 <- glm(TEP ~ Log_Chl + Nitrate + factor(Season), family = Gamma(link = "log"), data = train.data1)
-val_glmmodel4 <- glm(TEP ~ Log_Chl + factor(Season) + DO, family = Gamma(link = "log"), data = train.data1)
+val_model1 <- lm(TEP ~ Log_Chl + Nitrate, 
+                 data = train.data1)
+val_model2 <- lm(TEP ~ Log_Chl + factor(Season) + Temperature, 
+                 data = train.data1)  # Potential satellite data
+val_model3 <- lm(TEP ~ Log_Chl + Nitrate + factor(Season), 
+                 data = train.data1)
+val_model4 <- lm(TEP ~ Log_Chl + factor(Season) + DO, 
+                 data = train.data1)
+val_model5 <- lm(TEP ~ Log_Chl + factor(Season) + DO + Nitrate + MLD, 
+                 data = train.data1)
+val_model6 <- lm(TEP ~ Log_Chl + factor(Season) + DO + MLD, 
+                 data = train.data1)
 
 ###############################################################################
 
@@ -250,18 +311,12 @@ train.data1$predict3 <- predict(model3, train.data1, type = "response")
 test.data1$predict4 <- predict(model4, test.data1, type = "response")
 train.data1$predict4 <- predict(model4, train.data1, type = "response")
 
-# Get predictions for the general linear model training and testing sets:
-test.data1$glmpredict1 <- predict(glmmodel1, test.data1, type = "response")
-train.data1$glmpredict1 <- predict(glmmodel1, train.data1, type = "response")
+test.data1$predict5 <- predict(model5, test.data1, type = "response")
+train.data1$predict5 <- predict(model5, train.data1, type = "response")
 
-test.data1$glmpredict2 <- predict(glmmodel2, test.data1, type = "response")
-train.data1$glmpredict2 <- predict(glmmodel2, train.data1, type = "response")
+test.data1$predict6 <- predict(model6, test.data1, type = "response")
+train.data1$predict6 <- predict(model6, train.data1, type = "response")
 
-test.data1$glmpredict3 <- predict(glmmodel3, test.data1, type = "response")
-train.data1$glmpredict3 <- predict(glmmodel3, train.data1, type = "response")
-
-test.data1$glmpredict4 <- predict(glmmodel4, test.data1, type = "response")
-train.data1$glmpredict4 <- predict(glmmodel4, train.data1, type = "response")
 
 ###############################################################################
 
@@ -326,11 +381,173 @@ Val4 <- ggplot() +
         xlab("") +
         theme_minimal() 
 
+#Model5
+Val5 <- ggplot() + 
+        geom_abline(slope = 1, intercept = 0, linetype = "dashed") +  # Add a 1:1 line
+        geom_point(aes(x = test.data1$TEP, y = test.data1$predict5), 
+                   color = "red", fill = "red") +
+        geom_point(aes(x = train.data1$TEP, y = train.data1$predict5),
+                   color = "black", fill = "black") +
+        geom_smooth(aes(x = test.data1$TEP, y = test.data1$predict5),
+                    method = 'glm', color = "red") +
+        ylim(0, 175) +
+        xlim(0, 175) +
+        ylab("Predicted TEP Concentrations") +
+        xlab("") +
+        theme_minimal() 
+
+#Model6
+Val6 <- ggplot() + 
+        geom_abline(slope = 1, intercept = 0, linetype = "dashed") +  # Add a 1:1 line
+        geom_point(aes(x = test.data1$TEP, y = test.data1$predict6), 
+                   color = "red", fill = "red") +
+        geom_point(aes(x = train.data1$TEP, y = train.data1$predict6),
+                   color = "black", fill = "black") +
+        geom_smooth(aes(x = test.data1$TEP, y = test.data1$predict6),
+                    method = 'glm', color = "red") +
+        ylim(0, 175) +
+        xlim(0, 175) +
+        ylab("Predicted TEP Concentrations") +
+        xlab("") +
+        theme_minimal() 
+
 # Combine all the linear model validation plots:
-linear_vals <- ggarrange(Val1, Val2, Val3, Val4, common.legend = TRUE)
+linear_vals <- ggarrange(Val1, Val2, Val3, Val4, Val5, Val6,
+                         common.legend = TRUE)
 linear_vals <- annotate_figure(linear_vals, top = text_grob
-                    ("Linear models: Cross validations", color = "black", size = 12))
+                    ("Linear models: Cross validations", 
+                      color = "black", size = 12))
 linear_vals
+
+###############################################################################
+
+# Obtain the Root Mean Square Error and Mean Absolute Error for the linear 
+# models - this will give us an estimate of their accuracy.
+
+mean_total <- mean(UpperMixed_data$TEP)  # Calculate mean of true values
+
+#Model1
+model1RMSE <- RMSE(test.data1$predict1, test.data1$TEP)
+model1MAE <- MAE(test.data1$predict1, test.data1$TEP)
+
+model1RMSE <- RMSE(test.data1$predict1, test.data1$TEP)
+model1MAE <- MAE(test.data1$predict1, test.data1$TEP)
+
+#Model2
+model2RMSE <- RMSE(test.data1$predict2, test.data1$TEP)
+model2MAE <- MAE(test.data1$predict2, test.data1$TEP)
+
+model2RMSE <- RMSE(test.data1$predict2, test.data1$TEP)
+model2MAE <- MAE(test.data1$predict2, test.data1$TEP)
+
+#Model3
+model3RMSE <- RMSE(test.data1$predict3, test.data1$TEP)
+model3MAE <- MAE(test.data1$predict3, test.data1$TEP)
+
+model3RMSE <- RMSE(test.data1$predict3, test.data1$TEP)
+model3MAE <- MAE(test.data1$predict3, test.data1$TEP)
+
+#Model4
+model4RMSE <- RMSE(test.data1$predict4, test.data1$TEP)
+model4MAE <- MAE(test.data1$predict4, test.data1$TEP)
+
+model4RMSE <- RMSE(test.data1$predict4, test.data1$TEP)
+model4MAE <- MAE(test.data1$predict4, test.data1$TEP)
+
+#Model5
+model5RMSE <- RMSE(test.data1$predict5, test.data1$TEP)
+model5MAE <- MAE(test.data1$predict5, test.data1$TEP)
+
+model5RMSE <- RMSE(test.data1$predict5, test.data1$TEP)
+model5MAE <- MAE(test.data1$predict5, test.data1$TEP)
+
+#Model6
+model4RMSE <- RMSE(test.data1$predict6, test.data1$TEP)
+model4MAE <- MAE(test.data1$predict6, test.data1$TEP)
+
+model6RMSE <- RMSE(test.data1$predict6, test.data1$TEP)
+model6MAE <- MAE(test.data1$predict6, test.data1$TEP)
+
+# Print the results:
+
+# Model1
+print(paste("The RMSE of model1 predictions is", model1RMSE))
+print(paste("The MAE of model1 predictions is", model1MAE))
+print(paste("The RMSE % of the mean for model1 is", 
+            (model1RMSE/mean_total) * 100))
+
+# Model2
+print(paste("The RMSE of model2 predictions is", model2RMSE))
+print(paste("The MAE of model2 predictions is", model2MAE))
+print(paste("The RMSE % of the mean for model2 is", 
+            (model2RMSE/mean_total) * 100))
+
+# Model3
+print(paste("The RMSE of model3 predictions is", model3RMSE))
+print(paste("The MAE of model3 predictions is", model3MAE))
+print(paste("The RMSE % of the mean for model3 is", 
+            (model3RMSE/mean_total) * 100))
+
+# Model4
+print(paste("The RMSE of model4 predictions is", model4RMSE))
+print(paste("The MAE of model4 predictions is", model4MAE))
+print(paste("The RMSE % of the mean for model4 is", 
+            (model4RMSE/mean_total) * 100))
+
+# Model5
+print(paste("The RMSE of model5 predictions is", model3RMSE))
+print(paste("The MAE of model5 predictions is", model3MAE))
+print(paste("The RMSE % of the mean for model5 is", 
+            (model5RMSE/mean_total) * 100))
+
+# Model6
+print(paste("The RMSE of model6 predictions is", model4RMSE))
+print(paste("The MAE of model6 predictions is", model4MAE))
+print(paste("The RMSE % of the mean for model6 is", 
+            (model6RMSE/mean_total) * 100))
+
+
+```
+
+
+```{r}
+# CROSS VALIDATION AND MODEL COMPARISON: general linear models
+
+
+# General linear validation models:
+val_glmmodel1 <- glm(TEP ~ Log_Chl + Nitrate, 
+                     family = Gamma(link = "log"), data = train.data1)
+val_glmmodel2 <- glm(TEP ~ Log_Chl + factor(Season) + Temperature, 
+                     family = Gamma(link = "log"), data = train.data1)  # Potential satellite data
+val_glmmodel3 <- glm(TEP ~ Log_Chl + Nitrate + factor(Season), 
+                     family = Gamma(link = "log"), data = train.data1)
+val_glmmodel4 <- glm(TEP ~ Log_Chl + factor(Season) + DO, 
+                     family = Gamma(link = "log"), data = train.data1)
+val_glmmodel5 <- glm(TEP ~ Log_Chl + factor(Season) + DO + Nitrate + MLD, 
+                     family = Gamma(link = "log"), data = UpperMixed_data)
+val_glmmodel6 <- glm(TEP ~ Log_Chl + factor(Season) + DO + MLD, 
+                     family = Gamma(link = "log"), data = UpperMixed_data)
+
+###############################################################################
+
+# Get predictions for the general linear model training and testing sets:
+test.data1$glmpredict1 <- predict(glmmodel1, test.data1, type = "response")
+train.data1$glmpredict1 <- predict(glmmodel1, train.data1, type = "response")
+
+test.data1$glmpredict2 <- predict(glmmodel2, test.data1, type = "response")
+train.data1$glmpredict2 <- predict(glmmodel2, train.data1, type = "response")
+
+test.data1$glmpredict3 <- predict(glmmodel3, test.data1, type = "response")
+train.data1$glmpredict3 <- predict(glmmodel3, train.data1, type = "response")
+
+test.data1$glmpredict4 <- predict(glmmodel4, test.data1, type = "response")
+train.data1$glmpredict4 <- predict(glmmodel4, train.data1, type = "response")
+
+test.data1$glmpredict5 <- predict(glmmodel5, test.data1, type = "response")
+train.data1$glmpredict5 <- predict(glmmodel5, train.data1, type = "response")
+
+test.data1$glmpredict6 <- predict(glmmodel6, test.data1, type = "response")
+train.data1$glmpredict6 <- predict(glmmodel6, train.data1, type = "response")
 
 ###############################################################################
 
@@ -395,71 +612,48 @@ glmVal4 <- ggplot() +
         xlab("") +
         theme_minimal() 
 
+#Model5
+glmVal5 <- ggplot() + 
+        geom_abline(slope = 1, intercept = 0, linetype = "dashed") +  # Add a 1:1 line
+        geom_point(aes(x = test.data1$TEP, y = test.data1$glmpredict5), 
+                   color = "red", fill = "red") +
+        geom_point(aes(x = train.data1$TEP, y = train.data1$glmpredict5),
+                   color = "black", fill = "black") +
+        geom_smooth(aes(x = test.data1$TEP, y = test.data1$glmpredict5),
+                    method = 'glm', color = "red") +
+        ylim(0, 175) +
+        xlim(0, 175) +
+        ylab("Predicted TEP Concentrations") +
+        xlab("") +
+        theme_minimal() 
+
+#Model6
+glmVal6 <- ggplot() + 
+        geom_abline(slope = 1, intercept = 0, linetype = "dashed") +  # Add a 1:1 line
+        geom_point(aes(x = test.data1$TEP, y = test.data1$glmpredict6), 
+                   color = "red", fill = "red") +
+        geom_point(aes(x = train.data1$TEP, y = train.data1$glmpredict6),
+                   color = "black", fill = "black") +
+        geom_smooth(aes(x = test.data1$TEP, y = test.data1$glmpredict6),
+                    method = 'glm', color = "red") +
+        ylim(0, 175) +
+        xlim(0, 175) +
+        ylab("Predicted TEP Concentrations") +
+        xlab("") +
+        theme_minimal() 
+
 # Combine all the linear model validation plots:
-glm_vals <- ggarrange(glmVal1, glmVal2, glmVal3, glmVal4, common.legend = TRUE)
+glm_vals <- ggarrange(glmVal1, glmVal2, glmVal3, glmVal4, glmVal5, glmVal6,
+                      common.legend = TRUE)
 glm_vals <- annotate_figure(glm_vals, top = text_grob
-                    ("General linear models: Cross validations", color = "black", size = 12))
+                    ("General linear models: Cross validations", 
+                      color = "black", size = 12))
 glm_vals
 
 ###############################################################################
 
-# Obtain the Root Mean Square Error and Mean Absolute Error for the linear models - this will give us an estimate of their accuracy.
-
-mean_total <- mean(UpperMixed_data$TEP)  # Calculate mean of true values
-
-#Model1
-model1RMSE <- RMSE(test.data1$predict1, test.data1$TEP)
-model1MAE <- MAE(test.data1$predict1, test.data1$TEP)
-
-model1RMSE <- RMSE(test.data1$predict1, test.data1$TEP)
-model1MAE <- MAE(test.data1$predict1, test.data1$TEP)
-
-#Model2
-model2RMSE <- RMSE(test.data1$predict2, test.data1$TEP)
-model2MAE <- MAE(test.data1$predict2, test.data1$TEP)
-
-model2RMSE <- RMSE(test.data1$predict2, test.data1$TEP)
-model2MAE <- MAE(test.data1$predict2, test.data1$TEP)
-
-#Model3
-model3RMSE <- RMSE(test.data1$predict3, test.data1$TEP)
-model3MAE <- MAE(test.data1$predict3, test.data1$TEP)
-
-model3RMSE <- RMSE(test.data1$predict3, test.data1$TEP)
-model3MAE <- MAE(test.data1$predict3, test.data1$TEP)
-
-#Model4
-model4RMSE <- RMSE(test.data1$predict4, test.data1$TEP)
-model4MAE <- MAE(test.data1$predict4, test.data1$TEP)
-
-model4RMSE <- RMSE(test.data1$predict4, test.data1$TEP)
-model4MAE <- MAE(test.data1$predict4, test.data1$TEP)
-
-# Print the results:
-
-# Model1
-print(paste("The RMSE of model1 predictions is", model1RMSE))
-print(paste("The MAE of model1 predictions is", model1MAE))
-print(paste("The RMSE % of the mean for model1 is", (model1RMSE/mean_total) * 100))
-
-# Model2
-print(paste("The RMSE of model2 predictions is", model2RMSE))
-print(paste("The MAE of model2 predictions is", model2MAE))
-print(paste("The RMSE % of the mean for model2 is", (model2RMSE/mean_total) * 100))
-
-# Model3
-print(paste("The RMSE of model3 predictions is", model3RMSE))
-print(paste("The MAE of model3 predictions is", model3MAE))
-print(paste("The RMSE % of the mean for model3 is", (model3RMSE/mean_total) * 100))
-
-# Model4
-print(paste("The RMSE of model4 predictions is", model4RMSE))
-print(paste("The MAE of model4 predictions is", model4MAE))
-print(paste("The RMSE % of the mean for model4 is", (model4RMSE/mean_total) * 100))
-
-###############################################################################
-
-# Obtain the Root Mean Square Error and Mean Absolute Error for the general linear models - this will give us an estimate of their accuracy.
+# Obtain the Root Mean Square Error and Mean Absolute Error for 
+# the general linear models - this will give us an estimate of their accuracy.
 
 #glmModel1
 glmmodel1RMSE <- RMSE(test.data1$glmpredict1, test.data1$TEP)
@@ -489,30 +683,59 @@ glmmodel4MAE <- MAE(test.data1$glmpredict4, test.data1$TEP)
 glmmodel4RMSE <- RMSE(test.data1$glmpredict4, test.data1$TEP)
 glmmodel4MAE <- MAE(test.data1$glmpredict4, test.data1$TEP)
 
+#Model5
+glmmodel5RMSE <- RMSE(test.data1$glmpredict5, test.data1$TEP)
+glmmodel5MAE <- MAE(test.data1$glmpredict5, test.data1$TEP)
+
+glmmodel5RMSE <- RMSE(test.data1$glmpredict5, test.data1$TEP)
+glmmodel5MAE <- MAE(test.data1$glmpredict5, test.data1$TEP)
+
+#Model6
+glmmodel6RMSE <- RMSE(test.data1$glmpredict6, test.data1$TEP)
+glmmodel6MAE <- MAE(test.data1$glmpredict6, test.data1$TEP)
+
+glmmodel6RMSE <- RMSE(test.data1$glmpredict6, test.data1$TEP)
+glmmodel6MAE <- MAE(test.data1$glmpredict6, test.data1$TEP)
+
 # Print the results:
 
 # Model1
 print(paste("The RMSE of glmmodel1 predictions is", glmmodel1RMSE))
 print(paste("The MAE of glmmodel1 predictions is", glmmodel1MAE))
-print(paste("The RMSE % of the mean for glmmodel1 is", (glmmodel1RMSE/mean_total) * 100))
+print(paste("The RMSE % of the mean for glmmodel1 is", 
+            (glmmodel1RMSE/mean_total) * 100))
 
 # Model2
 print(paste("The RMSE of glmmodel2 predictions is", glmmodel2RMSE))
 print(paste("The MAE of glmmodel2 predictions is", glmmodel2MAE))
-print(paste("The RMSE % of the mean for glmmodel2 is", (glmmodel2RMSE/mean_total) * 100))
+print(paste("The RMSE % of the mean for glmmodel2 is", 
+            (glmmodel2RMSE/mean_total) * 100))
 
 # Model3
 print(paste("The RMSE of glmmodel3 predictions is", glmmodel3RMSE))
 print(paste("The MAE of glmmodel3 predictions is", glmmodel3MAE))
-print(paste("The RMSE % of the mean for glmmodel3 is", (glmmodel3RMSE/mean_total) * 100))
+print(paste("The RMSE % of the mean for glmmodel3 is", 
+            (glmmodel3RMSE/mean_total) * 100))
 
 # Model4
 print(paste("The RMSE of glmmodel4 predictions is", glmmodel4RMSE))
 print(paste("The MAE of glmmodel4 predictions is", glmmodel4MAE))
-print(paste("The RMSE % of the mean for glmmodel4 is", (glmmodel4RMSE/mean_total) * 100))
+print(paste("The RMSE % of the mean for glmmodel4 is", 
+            (glmmodel4RMSE/mean_total) * 100))
+
+# Model5
+print(paste("The RMSE of glmmodel5 predictions is", glmmodel5RMSE))
+print(paste("The MAE of glmmodel5 predictions is", glmmodel5MAE))
+print(paste("The RMSE % of the mean for glmmodel3 is", 
+            (glmmodel5RMSE/mean_total) * 100))
+
+# Model6
+print(paste("The RMSE of glmmodel4 predictions is", glmmodel6RMSE))
+print(paste("The MAE of glmmodel4 predictions is", glmmodel6MAE))
+print(paste("The RMSE % of the mean for glmmodel4 is", 
+            (glmmodel6RMSE/mean_total) * 100))
 
 
 ```
-
 
 
