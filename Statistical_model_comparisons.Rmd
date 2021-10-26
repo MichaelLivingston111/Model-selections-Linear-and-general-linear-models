@@ -54,7 +54,7 @@ model1 <- lm(TEP ~ Log_Chl + Nitrate, data = UpperMixed_data)
 model2 <- lm(TEP ~ Log_Chl + factor(Season) + Temperature, data = UpperMixed_data)  # Potential satellite model (DO instead of Temperature works very well!)
 model3 <- lm(TEP ~ Log_Chl + Nitrate + factor(Season), data = UpperMixed_data)
 model4 <- lm(TEP ~ Log_Chl + factor(Season) + DO + Nitrate, data = UpperMixed_data)
-model5 <- lm(TEP ~ Log_Chl + factor(Season) + DO + Nitrate + MLD, data = UpperMixed_data)
+model5 <- lm(TEP ~ Log_Chl + factor(Season) + DO + MLD, data = UpperMixed_data)
 model6 <- lm(TEP ~ Log_Chl + DO + MLD + Nitrate, data = UpperMixed_data)
 
 # General linear models:
@@ -267,7 +267,7 @@ glm_resids
 # Perform cross validations to test the models. Split the data set into a training set (70%) and a testing set (30%):
 
 # Set seed to replicate the same data partitions each time the code chunk is run:
-set.seed(333)  # 11, 13, 32, 36, 40
+set.seed(336)  # 11, 13, 32, 36, 40
 
 # Create the data split 70:30 training:testing:
 training.samples <- createDataPartition(UpperMixed_data$TEP, p = 0.7, list = FALSE)
@@ -289,12 +289,13 @@ val_model2 <- lm(TEP ~ Log_Chl + factor(Season) + Temperature,
                  data = train.data1)  # Potential satellite data
 val_model3 <- lm(TEP ~ Log_Chl + Nitrate + factor(Season), 
                  data = train.data1)
-val_model4 <- lm(TEP ~ Log_Chl + factor(Season) + DO, 
+val_model4 <- lm(TEP ~ Log_Chl + factor(Season) + DO + Nitrate, 
                  data = train.data1)
-val_model5 <- lm(TEP ~ Log_Chl + factor(Season) + DO + Nitrate + MLD, 
+val_model5 <- lm(TEP ~ Log_Chl + factor(Season) + DO + MLD, 
                  data = train.data1)
-val_model6 <- lm(TEP ~ Log_Chl + factor(Season) + DO + MLD, 
+val_model6 <- lm(TEP ~ Log_Chl + DO + MLD + Nitrate, 
                  data = train.data1)
+
 
 ###############################################################################
 
@@ -462,8 +463,8 @@ model5RMSE <- RMSE(test.data1$predict5, test.data1$TEP)
 model5MAE <- MAE(test.data1$predict5, test.data1$TEP)
 
 #Model6
-model4RMSE <- RMSE(test.data1$predict6, test.data1$TEP)
-model4MAE <- MAE(test.data1$predict6, test.data1$TEP)
+model6RMSE <- RMSE(test.data1$predict6, test.data1$TEP)
+model6MAE <- MAE(test.data1$predict6, test.data1$TEP)
 
 model6RMSE <- RMSE(test.data1$predict6, test.data1$TEP)
 model6MAE <- MAE(test.data1$predict6, test.data1$TEP)
@@ -495,14 +496,14 @@ print(paste("The RMSE % of the mean for model4 is",
             (model4RMSE/mean_total) * 100))
 
 # Model5
-print(paste("The RMSE of model5 predictions is", model3RMSE))
-print(paste("The MAE of model5 predictions is", model3MAE))
+print(paste("The RMSE of model5 predictions is", model5RMSE))
+print(paste("The MAE of model5 predictions is", model5MAE))
 print(paste("The RMSE % of the mean for model5 is", 
             (model5RMSE/mean_total) * 100))
 
 # Model6
-print(paste("The RMSE of model6 predictions is", model4RMSE))
-print(paste("The MAE of model6 predictions is", model4MAE))
+print(paste("The RMSE of model6 predictions is", model6RMSE))
+print(paste("The MAE of model6 predictions is", model6MAE))
 print(paste("The RMSE % of the mean for model6 is", 
             (model6RMSE/mean_total) * 100))
 
