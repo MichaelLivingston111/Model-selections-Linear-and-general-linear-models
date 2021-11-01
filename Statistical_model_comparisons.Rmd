@@ -26,6 +26,7 @@ suppressMessages(library(jtools))
 suppressMessages(library(ggstance))
 suppressMessages(library(huxtable))
 suppressMessages(library(PCAtools))
+suppressMessages(library(MuMIn))
 
 ```
 
@@ -51,15 +52,15 @@ UpperMixed_data <- total_ML_split$Y
 
 # Linear models:
 model1 <- lm(TEP ~ Log_Chl + Nitrate, data = UpperMixed_data)
-model2 <- lm(TEP ~ Log_Chl + factor(Season) + Temperature, data = UpperMixed_data)  # Potential satellite model (DO instead of Temperature works very well!)
+model2 <- lm(TEP ~ Log_Chl + factor(Season), data = UpperMixed_data)  # Potential satellite model 
 model3 <- lm(TEP ~ Log_Chl + Nitrate + factor(Season), data = UpperMixed_data)
 model4 <- lm(TEP ~ Log_Chl + factor(Season) + DO + Nitrate, data = UpperMixed_data)
 model5 <- lm(TEP ~ Log_Chl + factor(Season) + DO + MLD, data = UpperMixed_data)
-model6 <- lm(TEP ~ Log_Chl + DO + MLD + Nitrate, data = UpperMixed_data)
+model6 <- lm(TEP ~ Log_Chl + factor(Season) + DO + MLD + Nitrate, data = UpperMixed_data)
 
 # General linear models:
 glmmodel1 <- glm(TEP ~ Log_Chl + Nitrate, family = Gamma(link = "log"), data = UpperMixed_data)
-glmmodel2 <- glm(TEP ~ Log_Chl + factor(Season) + Temperature, family = Gamma(link = "log"), data = UpperMixed_data)  # Potential satellite model
+glmmodel2 <- glm(TEP ~ Log_Chl + factor(Season), family = Gamma(link = "log"), data = UpperMixed_data) # Potential satellite model
 glmmodel3 <- glm(TEP ~ Log_Chl + Nitrate + factor(Season), family = Gamma(link = "log"), data = UpperMixed_data)
 glmmodel4 <- glm(TEP ~ Log_Chl + factor(Season) + DO + Nitrate, family = Gamma(link = "log"), data = UpperMixed_data)
 glmmodel5 <- glm(TEP ~ Log_Chl + factor(Season) + DO + Nitrate + MLD, family = Gamma(link = "log"), data = UpperMixed_data)
@@ -103,6 +104,29 @@ AIC(model1, model2, model3, model4, model5, model6)
 
 # General linear mdoels:
 AIC(glmmodel1, glmmodel2, glmmodel3, glmmodel4, glmmodel5, glmmodel6)
+
+```
+
+
+```{r}
+# Lets directly compare a model with all predictors vs a model suggested by the AIC in terms of model coefficients:
+
+plot_summs(model4, model6, scale = TRUE, plot.distributions = FALSE)
+
+# Another AIC or AICc check:
+AIC(model4, model6)
+AICc(model4, model6)
+
+# For publication purposes, just plot the coefficient of the best suited model (model 4):
+
+plot_summs(model4, scale = TRUE, plot.distributions = FALSE)
+plot_coefs(model4, scale = TRUE, plot.distributions = FALSE)
+
+# Get a summary of for both models:
+summary(model4)
+summary(model6)
+
+# Note how model6 is more complex yet does not necessarily increase the accuracy of the model compare dot model4, which has less predictor terms but a similar accuracy. Therefore model 4 is likely the best model. This is confirmed with an AIC test.
 
 ```
 
@@ -285,7 +309,7 @@ test.data1 <- UpperMixed_data[-training.samples, ]  # Testing set
 # Linear validation models:
 val_model1 <- lm(TEP ~ Log_Chl + Nitrate, 
                  data = train.data1)
-val_model2 <- lm(TEP ~ Log_Chl + factor(Season) + Temperature, 
+val_model2 <- lm(TEP ~ Log_Chl + factor(Season), 
                  data = train.data1)  # Potential satellite data
 val_model3 <- lm(TEP ~ Log_Chl + Nitrate + factor(Season), 
                  data = train.data1)
@@ -293,7 +317,7 @@ val_model4 <- lm(TEP ~ Log_Chl + factor(Season) + DO + Nitrate,
                  data = train.data1)
 val_model5 <- lm(TEP ~ Log_Chl + factor(Season) + DO + MLD, 
                  data = train.data1)
-val_model6 <- lm(TEP ~ Log_Chl + DO + MLD + Nitrate, 
+val_model6 <- lm(TEP ~ Log_Chl + factor(Season) + DO + MLD + Nitrate, 
                  data = train.data1)
 
 
